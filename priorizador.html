@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Priorizador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf9f6;
+    --surface: #ffffff;
+    --surface-2: #f5f4f0;
+    --ink: #1c1917;
+    --ink-muted: #57534e;
+    --ink-faint: #a8a29e;
+    --border: #e7e5e4;
+    --border-strong: #d6d3d1;
+    --accent: #1c1917;
+    --highlight: #b45309;
+    --highlight-soft: #fef3c7;
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 20px;
+    --shadow-lg: 0 24px 48px -12px rgba(0,0,0,0.18);
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Fraunces', Georgia, serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  input { font-family: inherit; }
+
+  .app { max-width: 760px; margin: 0 auto; padding: 32px 20px 100px; }
+
+  .header { margin-bottom: 36px; }
+  .eyebrow {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--ink-faint); font-weight: 600; margin-bottom: 10px;
+  }
+  .header h1 {
+    font-family: var(--font-serif); font-size: 38px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1.05;
+  }
+  .header p {
+    color: var(--ink-muted); font-size: 15px; margin-top: 12px;
+    max-width: 58ch;
+  }
+
+  .section { margin-bottom: 28px; }
+  .section-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em;
+    font-weight: 600; color: var(--ink);
+  }
+  .section-count { font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+
+  .list { display: flex; flex-direction: column; gap: 12px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .card:focus-within { border-color: var(--border-strong); box-shadow: 0 0 0 4px rgba(28,25,23,0.04); }
+
+  .card-top {
+    display: flex; gap: 12px; align-items: center; margin-bottom: 18px;
+  }
+  .card-name {
+    flex: 1;
+    font-size: 15px; font-weight: 500;
+    background: transparent;
+    border: none; outline: none;
+    color: var(--ink);
+    padding: 6px 0;
+    border-bottom: 1px solid transparent;
+    min-width: 0;
+  }
+  .card-name::placeholder { color: var(--ink-faint); font-weight: 400; }
+  .card-name:focus { border-bottom-color: var(--border-strong); }
+
+  .score-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 10px; background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .score-badge .lbl { color: var(--ink-muted); font-weight: 400; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .icon-btn {
+    width: 32px; height: 32px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 6px; color: var(--ink-faint);
+    transition: all 0.15s ease; font-size: 14px;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+
+  .criteria { display: grid; gap: 12px; }
+  .criterion {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+  }
+  .criterion-label {
+    font-size: 13px; color: var(--ink); display: flex; flex-direction: column;
+  }
+  .criterion-label small {
+    font-size: 11px; color: var(--ink-faint); font-weight: 400;
+    margin-top: 2px; letter-spacing: 0.01em;
+  }
+  .dots { display: inline-flex; gap: 4px; }
+  .dot {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px; font-weight: 500;
+    color: var(--ink-faint); background: var(--surface);
+    transition: all 0.15s ease;
+    font-variant-numeric: tabular-nums;
+  }
+  .dot:hover { border-color: var(--ink-muted); color: var(--ink); }
+  .dot.active {
+    background: var(--ink); color: white; border-color: var(--ink);
+  }
+
+  .add-btn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 12px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--ink-muted);
+    font-size: 13px; font-weight: 500;
+    transition: all 0.18s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .add-btn:hover { border-color: var(--ink); color: var(--ink); background: var(--surface); }
+
+  .cta-row {
+    position: sticky; bottom: 0;
+    padding: 24px 0 8px;
+    background: linear-gradient(to top, var(--bg) 60%, transparent);
+    margin-top: 32px;
+    display: flex; justify-content: flex-end; gap: 12px;
+  }
+  .cta {
+    padding: 14px 26px;
+    background: var(--ink); color: white;
+    font-size: 14px; font-weight: 500;
+    border-radius: 999px;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+    letter-spacing: 0.01em;
+  }
+  .cta:hover { opacity: 0.88; }
+  .cta:active { transform: scale(0.985); }
+  .cta:disabled { opacity: 0.32; cursor: not-allowed; }
+  .cta.ghost { background: transparent; color: var(--ink); border: 1px solid var(--border-strong); }
+  .cta.ghost:hover { background: var(--surface); opacity: 1; }
+
+  .final-block { margin-bottom: 32px; }
+  .final-label {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--ink-muted); margin-bottom: 12px; font-weight: 600;
+  }
+  .final-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .final-card-name { font-size: 16px; font-weight: 500; }
+  .final-card-rank { font-size: 13px; color: var(--ink-faint); margin-right: 12px; font-variant-numeric: tabular-nums; }
+  .final-card-name-wrap { display: flex; align-items: baseline; }
+  .final-card-score { font-size: 12px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .final-card.featured {
+    background: var(--ink); color: white; border-color: var(--ink);
+  }
+  .final-card.featured .final-card-score,
+  .final-card.featured .final-card-rank { color: rgba(255,255,255,0.65); }
+
+  .actions-row {
+    display: flex; gap: 12px; justify-content: flex-end;
+    margin-top: 32px; flex-wrap: wrap;
+  }
+
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(28, 25, 23, 0.55);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px; z-index: 100;
+    animation: fadein 0.18s ease;
+  }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideup {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    max-width: 480px; width: 100%;
+    padding: 28px;
+    box-shadow: var(--shadow-lg);
+    animation: slideup 0.24s ease;
+    max-height: 92vh; overflow-y: auto;
+  }
+  .modal-icon {
+    width: 44px; height: 44px;
+    background: var(--highlight-soft);
+    color: var(--highlight);
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 12px; margin-bottom: 18px;
+    font-size: 20px;
+  }
+  .modal h2 {
+    font-family: var(--font-serif); font-size: 26px; font-weight: 500;
+    letter-spacing: -0.01em; margin-bottom: 8px;
+  }
+  .modal-instructions {
+    color: var(--ink-muted); font-size: 14px; margin-bottom: 18px;
+    line-height: 1.55;
+  }
+  .modal-instructions strong { color: var(--ink); font-weight: 600; }
+
+  .tiebreak-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+  .tiebreak-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: all 0.15s ease;
+    cursor: pointer;
+  }
+  .tiebreak-item:hover { border-color: var(--border-strong); }
+  .tiebreak-item.selected {
+    border-color: var(--ink); background: var(--ink); color: white;
+  }
+  .tiebreak-item-name { font-weight: 500; font-size: 15px; }
+  .tiebreak-item-score { font-size: 12px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .tiebreak-item.selected .tiebreak-item-score { color: rgba(255,255,255,0.7); }
+  .tiebreak-item.disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .selection-status {
+    font-size: 13px; color: var(--ink-muted);
+    margin-bottom: 18px; font-variant-numeric: tabular-nums;
+  }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 12px; }
+
+  .screen { animation: slideup 0.25s ease; }
+  .hidden { display: none !important; }
+
+  @media (max-width: 540px) {
+    .app { padding: 24px 16px 100px; }
+    .header h1 { font-size: 30px; }
+    .card { padding: 16px; }
+    .criterion { grid-template-columns: 1fr; gap: 8px; }
+    .modal { padding: 22px; }
+    .modal h2 { font-size: 22px; }
+    .dot { width: 36px; height: 36px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="eyebrow">Decisão por pontos</div>
+    <h1>Priorizador</h1>
+    <p>Liste prioridades do presente e do futuro, avalie cada uma em quatro critérios e descubra o que merece foco agora. Em todos os critérios, <strong>5 é a condição mais positiva</strong>.</p>
+  </header>
+
+  <div id="screen-home" class="screen">
+    <section class="section">
+      <div class="section-head">
+        <div class="section-title">Prioridades do presente</div>
+        <div class="section-count" id="count-presente">0 itens</div>
+      </div>
+      <div class="list" id="list-presente"></div>
+      <button class="add-btn" data-add="presente">+ Adicionar prioridade do presente</button>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div class="section-title">Prioridades do futuro</div>
+        <div class="section-count" id="count-futuro">0 itens</div>
+      </div>
+      <div class="list" id="list-futuro"></div>
+      <button class="add-btn" data-add="futuro">+ Adicionar prioridade do futuro</button>
+    </section>
+
+    <div class="cta-row">
+      <button class="cta" id="btn-finalize" disabled>Definir prioridades →</button>
+    </div>
+  </div>
+
+  <div id="screen-final" class="screen hidden">
+    <div class="final-block">
+      <div class="final-label">3 prioridades do presente</div>
+      <div id="final-presente"></div>
+    </div>
+    <div class="final-block">
+      <div class="final-label">1 prioridade do futuro</div>
+      <div id="final-futuro"></div>
+    </div>
+    <div class="actions-row">
+      <button class="cta ghost" id="btn-edit">Editar prioridades</button>
+      <button class="cta ghost" id="btn-reset">Recomeçar do zero</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-icon" aria-hidden="true">⚖</div>
+    <h2 id="modal-title">Temos um empate!</h2>
+    <p class="modal-instructions" id="modal-text"></p>
+    <div class="selection-status" id="modal-status"></div>
+    <div class="tiebreak-list" id="modal-list"></div>
+    <div class="modal-footer">
+      <button class="cta" id="btn-confirm-tie" disabled>Confirmar escolha</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const CRITERIA = [
+    { key: 'custo',      label: 'Custo',             hint: '1 = alto · 5 = baixo' },
+    { key: 'satisfacao', label: 'Satisfação própria', hint: '1 = baixa · 5 = alta' },
+    { key: 'utilidade',  label: 'Utilidade',         hint: '1 = baixa · 5 = alta' },
+    { key: 'esforco',    label: 'Esforço',           hint: '1 = difícil · 5 = fácil' },
+  ];
+  const STORAGE_KEY = 'priorizador-v1';
+  const WORDS = { 1: 'uma', 2: 'duas', 3: 'três' };
+
+  let state = loadState();
+  let tieQueue = [];
+  let currentTie = null;
+  let tieSelections = new Set();
+
+  function loadState() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && Array.isArray(parsed.presente) && Array.isArray(parsed.futuro)) return parsed;
+      }
+    } catch (e) {}
+    return { presente: [], futuro: [] };
+  }
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ presente: state.presente, futuro: state.futuro }));
+    } catch (e) {}
+  }
+
+  const uid = () => 'p_' + Math.random().toString(36).slice(2, 9);
+  const score = (p) => (p.custo||0) + (p.satisfacao||0) + (p.utilidade||0) + (p.esforco||0);
+  const isComplete = (p) => p.nome && p.nome.trim() && p.custo && p.satisfacao && p.utilidade && p.esforco;
+
+  const escapeHTML = (s) => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const escapeAttr = (s) => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+
+  function addPriority(category) {
+    state[category].push({ id: uid(), nome: '', custo: 0, satisfacao: 0, utilidade: 0, esforco: 0 });
+    saveState();
+    renderList(category);
+    focusLastCardInput(category);
+  }
+  function focusLastCardInput(category) {
+    const list = document.getElementById('list-' + category);
+    const last = list.querySelector('.card:last-child .card-name');
+    if (last) last.focus();
+  }
+  function removePriority(category, id) {
+    state[category] = state[category].filter(p => p.id !== id);
+    saveState();
+    renderList(category);
+  }
+  function updatePriority(category, id, field, value) {
+    const p = state[category].find(x => x.id === id);
+    if (!p) return;
+    p[field] = value;
+    saveState();
+
+    if (field !== 'nome') {
+      const card = document.querySelector(`.card[data-id="${id}"]`);
+      if (card) {
+        card.querySelectorAll(`[data-rate="${field}"]`).forEach(dot => {
+          dot.classList.toggle('active', parseInt(dot.dataset.value, 10) === value);
+        });
+      }
+    }
+    const badge = document.querySelector(`[data-score="${id}"]`);
+    if (badge) badge.textContent = score(p);
+    updateFinalizeButton();
+  }
+
+  function cardHTML(p) {
+    let criteriaHTML = '';
+    CRITERIA.forEach(c => {
+      let dotsHTML = '';
+      for (let i = 1; i <= 5; i++) {
+        dotsHTML += `<button type="button" class="dot ${p[c.key] === i ? 'active' : ''}" data-rate="${c.key}" data-value="${i}" aria-label="${c.label}: ${i}">${i}</button>`;
+      }
+      criteriaHTML += `
+        <div class="criterion">
+          <div class="criterion-label">${c.label}<small>${c.hint}</small></div>
+          <div class="dots">${dotsHTML}</div>
+        </div>`;
+    });
+    return `
+      <div class="card" data-id="${p.id}">
+        <div class="card-top">
+          <input class="card-name" type="text" placeholder="Nomeie esta prioridade" value="${escapeAttr(p.nome)}" maxlength="80" />
+          <div class="score-badge"><span class="lbl">total</span><span data-score="${p.id}">${score(p)}</span></div>
+          <button class="icon-btn" data-remove aria-label="Remover prioridade">✕</button>
+        </div>
+        <div class="criteria">${criteriaHTML}</div>
+      </div>`;
+  }
+
+  function renderList(category) {
+    const list = document.getElementById('list-' + category);
+    list.innerHTML = state[category].map(cardHTML).join('');
+    const count = state[category].length;
+    document.getElementById('count-' + category).textContent = count === 1 ? '1 item' : count + ' itens';
+    updateFinalizeButton();
+  }
+  function renderAll() {
+    renderList('presente');
+    renderList('futuro');
+  }
+
+  function updateFinalizeButton() {
+    const btn = document.getElementById('btn-finalize');
+    const presenteOk = state.presente.length >= 3 && state.presente.every(isComplete);
+    const futuroOk = state.futuro.length >= 1 && state.futuro.every(isComplete);
+    btn.disabled = !(presenteOk && futuroOk);
+  }
+
+  function bindListEvents(category) {
+    const list = document.getElementById('list-' + category);
+    list.addEventListener('click', (e) => {
+      const card = e.target.closest('.card');
+      if (!card) return;
+      const id = card.dataset.id;
+      if (e.target.matches('[data-rate]')) {
+        updatePriority(category, id, e.target.dataset.rate, parseInt(e.target.dataset.value, 10));
+      } else if (e.target.closest('[data-remove]')) {
+        removePriority(category, id);
+      }
+    });
+    list.addEventListener('input', (e) => {
+      if (!e.target.matches('.card-name')) return;
+      const card = e.target.closest('.card');
+      updatePriority(category, card.dataset.id, 'nome', e.target.value);
+    });
+  }
+
+  function analyze(items, slots) {
+    const ordered = [...items].sort((a, b) => score(b) - score(a));
+    if (ordered.length <= slots) {
+      return { auto: ordered, tied: [], slotsLeft: 0, needsTiebreak: false };
+    }
+    const cutoff = score(ordered[slots - 1]);
+    const auto = ordered.filter(p => score(p) > cutoff);
+    const tied = ordered.filter(p => score(p) === cutoff);
+    const slotsLeft = slots - auto.length;
+
+    if (tied.length > slotsLeft) {
+      return { auto, tied, slotsLeft, needsTiebreak: true };
+    }
+    return { auto: [...auto, ...tied], tied: [], slotsLeft: 0, needsTiebreak: false };
+  }
+
+  function finalize() {
+    const presR = analyze(state.presente, 3);
+    const futR  = analyze(state.futuro, 1);
+    state.finalPresente = presR.auto.slice();
+    state.finalFuturo   = futR.auto.slice();
+
+    tieQueue = [];
+    if (presR.needsTiebreak) tieQueue.push({ category: 'presente', label: 'do presente', ...presR });
+    if (futR.needsTiebreak)  tieQueue.push({ category: 'futuro',   label: 'do futuro',   ...futR  });
+
+    if (tieQueue.length > 0) processNextTie();
+    else showFinal();
+  }
+
+  function processNextTie() {
+    currentTie = tieQueue.shift();
+    tieSelections = new Set();
+    openModal(currentTie);
+  }
+
+  function openModal(tie) {
+    const slots = tie.slotsLeft;
+    const word = WORDS[slots] || slots;
+
+    let intro;
+    if (tie.auto.length > 0) {
+      const n = tie.auto.length;
+      const verb = n === 1 ? 'já entrou' : 'já entraram';
+      const noun = n === 1 ? 'prioridade' : 'prioridades';
+      intro = `<strong>${n} ${noun} ${verb} automaticamente.</strong> Escolha ${word} entre essas para completar.`;
+    } else {
+      intro = `Escolha ${word} entre essas.`;
+    }
+    document.getElementById('modal-text').innerHTML = intro;
+
+    const listEl = document.getElementById('modal-list');
+    listEl.innerHTML = tie.tied.map(p => `
+      <div class="tiebreak-item" data-id="${p.id}" role="button" tabindex="0">
+        <div class="tiebreak-item-name">${escapeHTML(p.nome)}</div>
+        <div class="tiebreak-item-score">${score(p)} pts</div>
+      </div>
+    `).join('');
+
+    listEl.querySelectorAll('.tiebreak-item').forEach(el => {
+      el.addEventListener('click', () => toggleTieSelection(el));
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleTieSelection(el); }
+      });
+    });
+
+    updateTieStatus();
+    document.getElementById('modal').classList.remove('hidden');
+  }
+
+  function toggleTieSelection(el) {
+    const id = el.dataset.id;
+    const slots = currentTie.slotsLeft;
+    if (tieSelections.has(id)) {
+      tieSelections.delete(id);
+      el.classList.remove('selected');
+    } else {
+      if (tieSelections.size >= slots) return;
+      tieSelections.add(id);
+      el.classList.add('selected');
+    }
+    const listEl = document.getElementById('modal-list');
+    const atMax = tieSelections.size >= slots;
+    listEl.querySelectorAll('.tiebreak-item').forEach(item => {
+      item.classList.toggle('disabled', atMax && !tieSelections.has(item.dataset.id));
+    });
+    updateTieStatus();
+  }
+
+  function updateTieStatus() {
+    const slots = currentTie.slotsLeft;
+    document.getElementById('modal-status').textContent =
+      `${tieSelections.size} de ${slots} selecionada${slots > 1 ? 's' : ''}`;
+    document.getElementById('btn-confirm-tie').disabled = tieSelections.size !== slots;
+  }
+
+  function confirmTie() {
+    if (tieSelections.size !== currentTie.slotsLeft) return;
+    const selected = currentTie.tied.filter(p => tieSelections.has(p.id));
+    if (currentTie.category === 'presente') {
+      state.finalPresente = [...currentTie.auto, ...selected];
+    } else {
+      state.finalFuturo = [...currentTie.auto, ...selected];
+    }
+    document.getElementById('modal').classList.add('hidden');
+    if (tieQueue.length > 0) setTimeout(processNextTie, 220);
+    else showFinal();
+  }
+
+  function showFinal() {
+    const presOrd = [...state.finalPresente].sort((a, b) => score(b) - score(a));
+    const futOrd  = [...state.finalFuturo].sort((a, b) => score(b) - score(a));
+
+    document.getElementById('final-presente').innerHTML = presOrd.map((p, i) => `
+      <div class="final-card">
+        <div class="final-card-name-wrap">
+          <span class="final-card-rank">${String(i + 1).padStart(2, '0')}</span>
+          <span class="final-card-name">${escapeHTML(p.nome)}</span>
+        </div>
+        <div class="final-card-score">${score(p)} pts</div>
+      </div>
+    `).join('');
+
+    document.getElementById('final-futuro').innerHTML = futOrd.map(p => `
+      <div class="final-card featured">
+        <div class="final-card-name">${escapeHTML(p.nome)}</div>
+        <div class="final-card-score">${score(p)} pts</div>
+      </div>
+    `).join('');
+
+    document.getElementById('screen-home').classList.add('hidden');
+    document.getElementById('screen-final').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showHome() {
+    document.getElementById('screen-final').classList.add('hidden');
+    document.getElementById('screen-home').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.querySelectorAll('[data-add]').forEach(btn => {
+    btn.addEventListener('click', () => addPriority(btn.dataset.add));
+  });
+  document.getElementById('btn-finalize').addEventListener('click', finalize);
+  document.getElementById('btn-confirm-tie').addEventListener('click', confirmTie);
+  document.getElementById('btn-edit').addEventListener('click', showHome);
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    if (confirm('Limpar todas as prioridades e recomeçar?')) {
+      state = { presente: [], futuro: [] };
+      seedEmpty();
+      saveState();
+      renderAll();
+      showHome();
+    }
+  });
+
+  function seedEmpty() {
+    for (let i = 0; i < 3; i++) state.presente.push({ id: uid(), nome: '', custo: 0, satisfacao: 0, utilidade: 0, esforco: 0 });
+    state.futuro.push({ id: uid(), nome: '', custo: 0, satisfacao: 0, utilidade: 0, esforco: 0 });
+  }
+
+  if (state.presente.length === 0 && state.futuro.length === 0) seedEmpty();
+
+  bindListEvents('presente');
+  bindListEvents('futuro');
+  renderAll();
+})();
+</script>
+</body>
+</html>
